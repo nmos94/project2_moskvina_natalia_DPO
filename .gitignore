@@ -1,0 +1,6 @@
+/.venv/
+dist/
+
+# Optional common ignores
+__pycache__/
+*.py[cod]
