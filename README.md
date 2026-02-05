@@ -49,19 +49,23 @@ create_table <table_name> <column1:type1> <column2:type2> ...
 - `bool` - логические значения (true/false)
 
 **Особенности:**
-- Столбец `ID:int` добавляется автоматически в начало каждой таблицы
+- Столбец `ID:int` добавляется автоматически в начало таблицы, если не задан пользователем
+- Если вы хотите использовать свой столбец ID (например, `ID:str`), можете указать его явно
 - Имя таблицы должно быть уникальным
 
 **Примеры:**
 ```
-# Создание таблицы пользователей
-db> create_table users name:str age:int active:bool
+# Создание таблицы без ID (добавится автоматически ID:int)
+>>>Введите команду: create_table users name:str age:int active:bool
+Таблица "users" успешно создана со столбцами: ID:int, name:str, age:int, active:bool
 
-# Создание таблицы товаров
-db> create_table products title:str price:int in_stock:bool
+# Создание таблицы с собственным ID
+>>>Введите команду: create_table products ID:str title:str price:int
+Таблица "products" успешно создана со столбцами: ID:str, title:str, price:int
 
-# Создание таблицы статей
-db> create_table articles title:str content:str views:int
+# ID в любом регистре
+>>>Введите команду: create_table articles id:int title:str content:str
+Таблица "articles" успешно создана со столбцами: id:int, title:str, content:str
 ```
 
 **Результат:**

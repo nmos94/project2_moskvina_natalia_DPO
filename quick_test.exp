@@ -1,0 +1,13 @@
+#!/usr/bin/expect -f
+# Быстрый тест новой версии
+
+set timeout 5
+spawn python3 -m src.primitive_db.main
+
+expect ">>>Введите команду:"
+send "help\r"
+
+expect ">>>Введите команду:"
+send "exit\r"
+
+expect eof

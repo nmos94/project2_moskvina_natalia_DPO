@@ -12,6 +12,10 @@ def create_table(metadata, table_name, columns):
 
     Raises:
         ValueError: если таблица уже существует или типы данных некорректны
+
+    Note:
+        Если столбец ID не задан пользователем, он добавляется автоматически
+        как первый столбец с типом int.
     """
     # Инициализируем структуру metadata, если она пустая
     if "tables" not in metadata:
@@ -33,8 +37,17 @@ def create_table(metadata, table_name, columns):
                 f"Разрешены только: {', '.join(valid_types)}"
             )
 
-    # Создаем словарь столбцов, автоматически добавляя ID:int в начало
-    columns_dict = {"ID": "int"}
+    # Проверяем, задан ли столбец ID пользователем
+    has_id = any(col_name.upper() == "ID" for col_name, _ in columns)
+
+    # Создаем словарь столбцов
+    columns_dict = {}
+
+    # Если ID не задан, добавляем его автоматически в начало
+    if not has_id:
+        columns_dict["ID"] = "int"
+
+    # Добавляем остальные столбцы
     for column_name, column_type in columns:
         columns_dict[column_name] = column_type
 
