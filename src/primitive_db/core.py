@@ -28,7 +28,8 @@ def create_table(metadata, table_name, columns):
     for column_name, column_type in columns:
         if column_type not in valid_types:
             raise ValueError(
-                f"Ошибка: недопустимый тип данных '{column_type}' для столбца '{column_name}'. "
+                f"Ошибка: недопустимый тип данных '{column_type}' "
+                f"для столбца '{column_name}'. "
                 f"Разрешены только: {', '.join(valid_types)}"
             )
 

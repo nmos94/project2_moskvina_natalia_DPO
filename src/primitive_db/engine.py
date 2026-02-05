@@ -1,8 +1,7 @@
 import shlex
-import os
-from src.primitive_db.utils import load_metadata, save_metadata
-from src.primitive_db.core import create_table, drop_table
 
+from src.primitive_db.core import create_table, drop_table
+from src.primitive_db.utils import load_metadata, save_metadata
 
 COMMANDS_HELP = """\
 Доступные команды:
@@ -91,7 +90,10 @@ def run():
                 columns = []
                 for col_arg in args[2:]:
                     if ':' not in col_arg:
-                        print(f"Ошибка: неверный формат столбца '{col_arg}'. Используйте формат column_name:type")
+                        print(
+                            f"Ошибка: неверный формат столбца '{col_arg}'. "
+                            f"Используйте формат column_name:type"
+                        )
                         break
 
                     col_name, col_type = col_arg.split(':', 1)

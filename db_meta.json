@@ -1,0 +1,12 @@
+{
+    "tables": {
+        "test1": {
+            "columns": {
+                "ID": "int",
+                "col1": "int",
+                "col2": "str",
+                "col3": "bool"
+            }
+        }
+    }
+}
