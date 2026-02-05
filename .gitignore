@@ -4,3 +4,9 @@ dist/
 # Optional common ignores
 __pycache__/
 *.py[cod]
+
+# Database metadata file (generated at runtime)
+db_meta.json
+
+# Demo files (can be regenerated)
+demo_script.sh

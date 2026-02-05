@@ -1,11 +1,10 @@
 {
     "tables": {
-        "test1": {
+        "products": {
             "columns": {
                 "ID": "int",
-                "col1": "int",
-                "col2": "str",
-                "col3": "bool"
+                "title": "str",
+                "price": "int"
             }
         }
     }

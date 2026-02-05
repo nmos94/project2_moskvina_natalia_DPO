@@ -1,0 +1,60 @@
+#!/usr/bin/expect -f
+
+# Настройки
+set timeout 10
+set send_slow {1 .05}
+
+# Запуск программы
+spawn poetry run database
+
+# Ожидание приглашения
+expect ">>>Введите команду:"
+
+# Создание первой таблицы
+send -s "create_table users name:str age:int is_active:bool\r"
+expect ">>>Введите команду:"
+sleep 1
+
+# Просмотр списка таблиц
+send -s "list_tables\r"
+expect ">>>Введите команду:"
+sleep 1
+
+# Создание второй таблицы
+send -s "create_table products title:str price:int\r"
+expect ">>>Введите команду:"
+sleep 1
+
+# Просмотр обновленного списка таблиц
+send -s "list_tables\r"
+expect ">>>Введите команду:"
+sleep 1
+
+# Попытка создать существующую таблицу
+send -s "create_table users name:str\r"
+expect ">>>Введите команду:"
+sleep 1
+
+# Удаление таблицы users
+send -s "drop_table users\r"
+expect ">>>Введите команду:"
+sleep 1
+
+# Просмотр списка после удаления
+send -s "list_tables\r"
+expect ">>>Введите команду:"
+sleep 1
+
+# Попытка удалить несуществующую таблицу
+send -s "drop_table nonexistent\r"
+expect ">>>Введите команду:"
+sleep 1
+
+# Справка
+send -s "help\r"
+expect ">>>Введите команду:"
+sleep 2
+
+# Выход
+send -s "exit\r"
+expect eof

@@ -1,0 +1,61 @@
+#!/usr/bin/expect -f
+
+# Настройки
+set timeout 10
+set send_slow {1 .05}
+
+# Запуск программы напрямую через Python
+spawn python3 -m src.primitive_db.main
+
+# Ожидание приглашения
+expect ">>>Введите команду:"
+sleep 1
+
+# Создание первой таблицы
+send -s "create_table users name:str age:int is_active:bool\r"
+expect ">>>Введите команду:"
+sleep 1.5
+
+# Просмотр списка таблиц
+send -s "list_tables\r"
+expect ">>>Введите команду:"
+sleep 1.5
+
+# Создание второй таблицы
+send -s "create_table products title:str price:int\r"
+expect ">>>Введите команду:"
+sleep 1.5
+
+# Просмотр обновленного списка таблиц
+send -s "list_tables\r"
+expect ">>>Введите команду:"
+sleep 1.5
+
+# Попытка создать существующую таблицу (ошибка)
+send -s "create_table users name:str\r"
+expect ">>>Введите команду:"
+sleep 1.5
+
+# Удаление таблицы users
+send -s "drop_table users\r"
+expect ">>>Введите команду:"
+sleep 1.5
+
+# Просмотр списка после удаления
+send -s "list_tables\r"
+expect ">>>Введите команду:"
+sleep 1.5
+
+# Попытка удалить несуществующую таблицу (ошибка)
+send -s "drop_table nonexistent\r"
+expect ">>>Введите команду:"
+sleep 1.5
+
+# Справка
+send -s "help\r"
+expect ">>>Введите команду:"
+sleep 2
+
+# Выход
+send -s "exit\r"
+expect eof

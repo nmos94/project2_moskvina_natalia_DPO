@@ -68,3 +68,19 @@ def drop_table(metadata, table_name):
     del metadata["tables"][table_name]
 
     return metadata
+
+
+def list_tables(metadata):
+    """
+    Возвращает список всех таблиц в базе данных.
+
+    Args:
+        metadata: словарь с метаданными базы данных
+
+    Returns:
+        list: список имен таблиц
+    """
+    if "tables" not in metadata or not metadata["tables"]:
+        return []
+
+    return list(metadata["tables"].keys())

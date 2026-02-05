@@ -1,24 +1,16 @@
 import shlex
 
-from src.primitive_db.core import create_table, drop_table
+from src.primitive_db.core import create_table, drop_table, list_tables
 from src.primitive_db.utils import load_metadata, save_metadata
 
 COMMANDS_HELP = """\
-Доступные команды:
-  create_table <table_name> <column1:type1> <column2:type2> ...
-      Создать новую таблицу с указанными столбцами
-      Типы данных: int, str, bool
-      Пример: create_table users name:str age:int active:bool
-
-  drop_table <table_name>
-      Удалить таблицу
-      Пример: drop_table users
-
-  help
-      Показать справку
-
-  exit
-      Выйти из программы
+***Процесс работы с таблицей***
+Функции:
+<command> create_table <имя_таблицы> <столбец1:тип> <столбец2:тип> .. - создать таблицу
+<command> list_tables - показать список всех таблиц
+<command> drop_table <имя_таблицы> - удалить таблицу
+<command> exit - выход из программы
+<command> help - справочная информация
 """
 
 # Путь к файлу метаданных
@@ -43,8 +35,7 @@ def run():
     Главная функция, содержащая основной цикл программы.
     Обрабатывает команды пользователя для управления таблицами БД.
     """
-    print("=== Primitive Database ===")
-    print("Введите 'help' для справки\n")
+    print(COMMANDS_HELP)
 
     while True:
         try:
@@ -52,7 +43,7 @@ def run():
             metadata = load_metadata(METADATA_FILE)
 
             # Запрашиваем ввод у пользователя
-            user_input = input("db> ").strip()
+            user_input = input(">>>Введите команду: ").strip()
 
             # Пропускаем пустой ввод
             if not user_input:
@@ -77,6 +68,14 @@ def run():
 
             elif command == "help":
                 print(COMMANDS_HELP)
+
+            elif command == "list_tables":
+                tables = list_tables(metadata)
+                if not tables:
+                    print("Нет созданных таблиц")
+                else:
+                    for table in tables:
+                        print(f"- {table}")
 
             elif command == "create_table":
                 if len(args) < 2:
@@ -103,7 +102,15 @@ def run():
                     try:
                         metadata = create_table(metadata, table_name, columns)
                         save_metadata(METADATA_FILE, metadata)
-                        print(f"Таблица '{table_name}' успешно создана")
+                        # Формируем список столбцов для вывода
+                        table_columns = metadata["tables"][table_name]["columns"]
+                        columns_str = ", ".join(
+                            [f"{col}:{typ}" for col, typ in table_columns.items()]
+                        )
+                        print(
+                            f'Таблица "{table_name}" успешно создана '
+                            f"со столбцами: {columns_str}"
+                        )
                     except ValueError as e:
                         print(str(e))
 
@@ -118,7 +125,7 @@ def run():
                 try:
                     metadata = drop_table(metadata, table_name)
                     save_metadata(METADATA_FILE, metadata)
-                    print(f"Таблица '{table_name}' успешно удалена")
+                    print(f'Таблица "{table_name}" успешно удалена.')
                 except ValueError as e:
                     print(str(e))
 
