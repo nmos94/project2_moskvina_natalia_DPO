@@ -1,0 +1,72 @@
+#!/usr/bin/expect -f
+# Демонстрация CRUD операций для asciinema
+
+set timeout 10
+set send_slow {1 .05}
+
+spawn python3 -m src.primitive_db.main
+
+expect ">>>Введите команду:"
+sleep 2
+
+# Создаем таблицу
+send -s "create_table employees name:str age:int salary:int\r"
+expect ">>>Введите команду:"
+sleep 1.5
+
+# Добавляем записи
+send -s "insert into employees values (\"Alice\", 30, 50000)\r"
+expect ">>>Введите команду:"
+sleep 1.5
+
+send -s "insert into employees values (\"Bob\", 25, 45000)\r"
+expect ">>>Введите команду:"
+sleep 1.5
+
+send -s "insert into employees values (\"Charlie\", 35, 60000)\r"
+expect ">>>Введите команду:"
+sleep 1.5
+
+# Просматриваем все записи
+send -s "select from employees\r"
+expect ">>>Введите команду:"
+sleep 2
+
+# Фильтруем
+send -s "select from employees where age = 30\r"
+expect ">>>Введите команду:"
+sleep 2
+
+# Обновляем
+send -s "update employees set salary = 55000 where name = \"Alice\"\r"
+expect ">>>Введите команду:"
+sleep 1.5
+
+# Проверяем обновление
+send -s "select from employees where name = \"Alice\"\r"
+expect ">>>Введите команду:"
+sleep 2
+
+# Удаляем
+send -s "delete from employees where name = \"Charlie\"\r"
+expect ">>>Введите команду:"
+sleep 1.5
+
+# Информация о таблице
+send -s "info employees\r"
+expect ">>>Введите команду:"
+sleep 2
+
+# Просматриваем список таблиц
+send -s "list_tables\r"
+expect ">>>Введите команду:"
+sleep 1.5
+
+# Справка
+send -s "help\r"
+expect ">>>Введите команду:"
+sleep 3
+
+# Выход
+send -s "exit\r"
+expect eof

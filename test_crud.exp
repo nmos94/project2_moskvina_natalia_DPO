@@ -1,0 +1,34 @@
+#!/usr/bin/expect -f
+# Тест CRUD операций
+
+set timeout 10
+spawn python3 -m src.primitive_db.main
+
+expect ">>>Введите команду:"
+send "create_table users name:str age:int active:bool\r"
+
+expect ">>>Введите команду:"
+send "insert into users values (\"Alice\", 30, true)\r"
+
+expect ">>>Введите команду:"
+send "insert into users values (\"Bob\", 25, true)\r"
+
+expect ">>>Введите команду:"
+send "select from users\r"
+
+expect ">>>Введите команду:"
+send "update users set age = 31 where name = \"Alice\"\r"
+
+expect ">>>Введите команду:"
+send "select from users where name = \"Alice\"\r"
+
+expect ">>>Введите команду:"
+send "delete from users where name = \"Bob\"\r"
+
+expect ">>>Введите команду:"
+send "info users\r"
+
+expect ">>>Введите команду:"
+send "exit\r"
+
+expect eof

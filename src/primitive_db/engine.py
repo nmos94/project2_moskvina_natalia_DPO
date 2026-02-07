@@ -1,7 +1,28 @@
 import shlex
 
-from src.primitive_db.core import create_table, drop_table, list_tables
-from src.primitive_db.utils import load_metadata, save_metadata
+from prettytable import PrettyTable
+
+from src.primitive_db.core import (
+    create_table,
+    delete,
+    drop_table,
+    get_table_info,
+    insert,
+    list_tables,
+    select,
+    update,
+)
+from src.primitive_db.parser import (
+    parse_set_clause,
+    parse_values,
+    parse_where_clause,
+)
+from src.primitive_db.utils import (
+    load_metadata,
+    load_table_data,
+    save_metadata,
+    save_table_data,
+)
 
 # Путь к файлу метаданных
 METADATA_FILE = "db_meta.json"
@@ -10,8 +31,31 @@ METADATA_FILE = "db_meta.json"
 def print_help():
     """Prints the help message for the current mode."""
 
-    print("\n***Процесс работы с таблицей***")
+    print("\n***Операции с данными***")
     print("Функции:")
+    print(
+        "<command> insert into <имя_таблицы> values (<значение1>, ...) "
+        "- создать запись"
+    )
+    print(
+        "<command> select from <имя_таблицы> where <столбец> = <значение> "
+        "- прочитать записи по условию"
+    )
+    print(
+        "<command> select from <имя_таблицы> "
+        "- прочитать все записи"
+    )
+    print(
+        "<command> update <имя_таблицы> set <столбец> = <значение> "
+        "where <столбец> = <значение> - обновить запись"
+    )
+    print(
+        "<command> delete from <имя_таблицы> where <столбец> = <значение> "
+        "- удалить запись"
+    )
+    print("<command> info <имя_таблицы> - вывести информацию о таблице")
+
+    print("\n***Управление таблицами***")
     print(
         "<command> create_table <имя_таблицы> <столбец1:тип> .. "
         "- создать таблицу"
@@ -134,6 +178,188 @@ def run():
                     save_metadata(METADATA_FILE, metadata)
                     print(f'Таблица "{table_name}" успешно удалена.')
                 except ValueError as e:
+                    print(str(e))
+
+            elif command == "insert":
+                # insert into <table> values (...)
+                if (len(args) < 4 or args[1].lower() != "into" or
+                        args[3].lower() != "values"):
+                    print("Ошибка: неверный синтаксис")
+                    print(
+                        "Пример: insert into users values "
+                        '("Sergei", 28, true)'
+                    )
+                    continue
+
+                table_name = args[2]
+                values_str = " ".join(args[4:])
+
+                try:
+                    # Парсим значения
+                    values = parse_values(values_str)
+
+                    # Загружаем данные таблицы
+                    table_data = load_table_data(table_name)
+
+                    # Вставляем запись
+                    table_data, new_id = insert(
+                        metadata, table_data, table_name, values
+                    )
+
+                    # Сохраняем данные
+                    save_table_data(table_name, table_data)
+
+                    print(
+                        f'Запись с ID={new_id} успешно добавлена '
+                        f'в таблицу "{table_name}".'
+                    )
+                except (ValueError, KeyError) as e:
+                    print(str(e))
+
+            elif command == "select":
+                # select from <table> [where ...]
+                if len(args) < 3 or args[1].lower() != "from":
+                    print("Ошибка: неверный синтаксис")
+                    print("Пример: select from users where age = 28")
+                    print("Или: select from users")
+                    continue
+
+                table_name = args[2]
+
+                try:
+                    # Загружаем данные таблицы
+                    table_data = load_table_data(table_name)
+
+                    # Проверяем наличие WHERE
+                    where_clause = None
+                    if len(args) > 3 and args[3].lower() == "where":
+                        where_str = " ".join(args[4:])
+                        where_clause = parse_where_clause(where_str)
+
+                    # Выбираем записи
+                    records = select(table_data, where_clause)
+
+                    # Выводим результат с помощью PrettyTable
+                    if not records:
+                        print("Записей не найдено")
+                    else:
+                        # Получаем имена столбцов из первой записи
+                        columns = list(records[0].keys())
+
+                        # Создаем таблицу
+                        table = PrettyTable(columns)
+
+                        # Добавляем строки
+                        for record in records:
+                            table.add_row([record.get(col, "") for col in columns])
+
+                        print(table)
+                except (ValueError, KeyError) as e:
+                    print(str(e))
+
+            elif command == "update":
+                # update <table> set <column> = <value> where <column> = <value>
+                has_where = "where" in [a.lower() for a in args]
+                if len(args) < 6 or args[2].lower() != "set" or not has_where:
+                    print("Ошибка: неверный синтаксис")
+                    print(
+                        "Пример: update users set age = 29 "
+                        'where name = "Sergei"'
+                    )
+                    continue
+
+                table_name = args[1]
+
+                try:
+                    # Находим позицию WHERE
+                    where_index = next(
+                        i for i, arg in enumerate(args)
+                        if arg.lower() == "where"
+                    )
+
+                    # Парсим SET и WHERE части
+                    set_str = " ".join(args[3:where_index])
+                    where_str = " ".join(args[where_index + 1:])
+
+                    set_clause = parse_set_clause(set_str)
+                    where_clause = parse_where_clause(where_str)
+
+                    # Загружаем данные таблицы
+                    table_data = load_table_data(table_name)
+
+                    # Обновляем записи
+                    table_data, updated_count = update(
+                        metadata, table_data, table_name,
+                        set_clause, where_clause
+                    )
+
+                    # Сохраняем данные
+                    save_table_data(table_name, table_data)
+
+                    if updated_count > 0:
+                        print(
+                            f'Обновлено записей: {updated_count} '
+                            f'в таблице "{table_name}".'
+                        )
+                    else:
+                        print("Записей для обновления не найдено")
+                except (ValueError, KeyError, StopIteration) as e:
+                    print(str(e) if str(e) else "Ошибка: неверный синтаксис")
+
+            elif command == "delete":
+                # delete from <table> where <column> = <value>
+                if (len(args) < 5 or args[1].lower() != "from" or
+                        args[3].lower() != "where"):
+                    print("Ошибка: неверный синтаксис")
+                    print("Пример: delete from users where ID = 1")
+                    continue
+
+                table_name = args[2]
+                where_str = " ".join(args[4:])
+
+                try:
+                    # Парсим WHERE условие
+                    where_clause = parse_where_clause(where_str)
+
+                    # Загружаем данные таблицы
+                    table_data = load_table_data(table_name)
+
+                    # Удаляем записи
+                    table_data, deleted_count = delete(table_data, where_clause)
+
+                    # Сохраняем данные
+                    save_table_data(table_name, table_data)
+
+                    if deleted_count > 0:
+                        print(
+                            f'Удалено записей: {deleted_count} '
+                            f'из таблицы "{table_name}".'
+                        )
+                    else:
+                        print("Записей для удаления не найдено")
+                except (ValueError, KeyError) as e:
+                    print(str(e))
+
+            elif command == "info":
+                # info <table>
+                if len(args) < 2:
+                    print("Ошибка: укажите имя таблицы")
+                    print("Пример: info users")
+                    continue
+
+                table_name = args[1]
+
+                try:
+                    # Загружаем данные таблицы
+                    table_data = load_table_data(table_name)
+
+                    # Получаем информацию о таблице
+                    info = get_table_info(metadata, table_data, table_name)
+
+                    print(f"Таблица: {info['name']}")
+                    print(f"Столбцы: {info['columns']}")
+                    print(f"Количество записей: {info['record_count']}")
+                except (ValueError, KeyError) as e:
                     print(str(e))
 
             else:
