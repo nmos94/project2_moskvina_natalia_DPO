@@ -1,3 +1,7 @@
+from src.primitive_db.decorators import confirm_action, handle_db_errors, log_time
+
+
+@handle_db_errors
 def create_table(metadata, table_name, columns):
     """
     Создает новую таблицу в метаданных базы данных.
@@ -59,6 +63,8 @@ def create_table(metadata, table_name, columns):
     return metadata
 
 
+@handle_db_errors
+@confirm_action("удаление таблицы")
 def drop_table(metadata, table_name):
     """
     Удаляет таблицу из метаданных базы данных.
@@ -133,6 +139,8 @@ def validate_value_type(value, expected_type):
         return False, None
 
 
+@log_time
+@handle_db_errors
 def insert(metadata, table_data, table_name, values):
     """
     Добавляет новую запись в таблицу.
@@ -202,6 +210,7 @@ def insert(metadata, table_data, table_name, values):
     return table_data, new_id
 
 
+@log_time
 def select(table_data, where_clause=None):
     """
     Выбирает записи из таблицы.
@@ -231,6 +240,7 @@ def select(table_data, where_clause=None):
     return filtered_records
 
 
+@handle_db_errors
 def update(metadata, table_data, table_name, set_clause, where_clause):
     """
     Обновляет записи в таблице.
@@ -290,6 +300,8 @@ def update(metadata, table_data, table_name, set_clause, where_clause):
     return table_data, updated_count
 
 
+@handle_db_errors
+@confirm_action("удаление записи")
 def delete(table_data, where_clause):
     """
     Удаляет записи из таблицы.
@@ -323,6 +335,7 @@ def delete(table_data, where_clause):
     return records_to_keep, deleted_count
 
 
+@handle_db_errors
 def get_table_info(metadata, table_data, table_name):
     """
     Получает информацию о таблице.

@@ -150,8 +150,9 @@ def run():
                     columns.append((col_name, col_type))
                 else:
                     # Выполняется, если цикл завершился без break
-                    try:
-                        metadata = create_table(metadata, table_name, columns)
+                    result = create_table(metadata, table_name, columns)
+                    if result is not None:
+                        metadata = result
                         save_metadata(METADATA_FILE, metadata)
                         # Формируем список столбцов для вывода
                         table_columns = metadata["tables"][table_name]["columns"]
@@ -162,8 +163,6 @@ def run():
                             f'Таблица "{table_name}" успешно создана '
                             f"со столбцами: {columns_str}"
                         )
-                    except ValueError as e:
-                        print(str(e))
 
             elif command == "drop_table":
                 if len(args) < 2:
@@ -173,12 +172,11 @@ def run():
 
                 table_name = args[1]
 
-                try:
-                    metadata = drop_table(metadata, table_name)
+                result = drop_table(metadata, table_name)
+                if result is not None:
+                    metadata = result
                     save_metadata(METADATA_FILE, metadata)
                     print(f'Таблица "{table_name}" успешно удалена.')
-                except ValueError as e:
-                    print(str(e))
 
             elif command == "insert":
                 # insert into <table> values (...)
@@ -194,17 +192,16 @@ def run():
                 table_name = args[2]
                 values_str = " ".join(args[4:])
 
-                try:
-                    # Парсим значения
-                    values = parse_values(values_str)
+                # Парсим значения
+                values = parse_values(values_str)
 
-                    # Загружаем данные таблицы
-                    table_data = load_table_data(table_name)
+                # Загружаем данные таблицы
+                table_data = load_table_data(table_name)
 
-                    # Вставляем запись
-                    table_data, new_id = insert(
-                        metadata, table_data, table_name, values
-                    )
+                # Вставляем запись
+                result = insert(metadata, table_data, table_name, values)
+                if result is not None:
+                    table_data, new_id = result
 
                     # Сохраняем данные
                     save_table_data(table_name, table_data)
@@ -213,8 +210,6 @@ def run():
                         f'Запись с ID={new_id} успешно добавлена '
                         f'в таблицу "{table_name}".'
                     )
-                except (ValueError, KeyError) as e:
-                    print(str(e))
 
             elif command == "select":
                 # select from <table> [where ...]
@@ -226,36 +221,37 @@ def run():
 
                 table_name = args[2]
 
-                try:
-                    # Загружаем данные таблицы
-                    table_data = load_table_data(table_name)
+                # Загружаем данные таблицы
+                table_data = load_table_data(table_name)
 
-                    # Проверяем наличие WHERE
-                    where_clause = None
-                    if len(args) > 3 and args[3].lower() == "where":
-                        where_str = " ".join(args[4:])
+                # Проверяем наличие WHERE
+                where_clause = None
+                if len(args) > 3 and args[3].lower() == "where":
+                    where_str = " ".join(args[4:])
+                    try:
                         where_clause = parse_where_clause(where_str)
+                    except ValueError as e:
+                        print(str(e))
+                        continue
 
-                    # Выбираем записи
-                    records = select(table_data, where_clause)
+                # Выбираем записи
+                records = select(table_data, where_clause)
 
-                    # Выводим результат с помощью PrettyTable
-                    if not records:
-                        print("Записей не найдено")
-                    else:
-                        # Получаем имена столбцов из первой записи
-                        columns = list(records[0].keys())
+                # Выводим результат с помощью PrettyTable
+                if not records:
+                    print("Записей не найдено")
+                else:
+                    # Получаем имена столбцов из первой записи
+                    columns = list(records[0].keys())
 
-                        # Создаем таблицу
-                        table = PrettyTable(columns)
+                    # Создаем таблицу
+                    table = PrettyTable(columns)
 
-                        # Добавляем строки
-                        for record in records:
-                            table.add_row([record.get(col, "") for col in columns])
+                    # Добавляем строки
+                    for record in records:
+                        table.add_row([record.get(col, "") for col in columns])
 
-                        print(table)
-                except (ValueError, KeyError) as e:
-                    print(str(e))
+                    print(table)
 
             elif command == "update":
                 # update <table> set <column> = <value> where <column> = <value>
@@ -283,15 +279,20 @@ def run():
 
                     set_clause = parse_set_clause(set_str)
                     where_clause = parse_where_clause(where_str)
+                except (ValueError, StopIteration) as e:
+                    print(str(e) if str(e) else "Ошибка: неверный синтаксис")
+                    continue
 
-                    # Загружаем данные таблицы
-                    table_data = load_table_data(table_name)
+                # Загружаем данные таблицы
+                table_data = load_table_data(table_name)
 
-                    # Обновляем записи
-                    table_data, updated_count = update(
-                        metadata, table_data, table_name,
-                        set_clause, where_clause
-                    )
+                # Обновляем записи
+                result = update(
+                    metadata, table_data, table_name,
+                    set_clause, where_clause
+                )
+                if result is not None:
+                    table_data, updated_count = result
 
                     # Сохраняем данные
                     save_table_data(table_name, table_data)
@@ -303,8 +304,6 @@ def run():
                         )
                     else:
                         print("Записей для обновления не найдено")
-                except (ValueError, KeyError, StopIteration) as e:
-                    print(str(e) if str(e) else "Ошибка: неверный синтаксис")
 
             elif command == "delete":
                 # delete from <table> where <column> = <value>
@@ -320,12 +319,17 @@ def run():
                 try:
                     # Парсим WHERE условие
                     where_clause = parse_where_clause(where_str)
+                except ValueError as e:
+                    print(str(e))
+                    continue
 
-                    # Загружаем данные таблицы
-                    table_data = load_table_data(table_name)
+                # Загружаем данные таблицы
+                table_data = load_table_data(table_name)
 
-                    # Удаляем записи
-                    table_data, deleted_count = delete(table_data, where_clause)
+                # Удаляем записи
+                result = delete(table_data, where_clause)
+                if result is not None:
+                    table_data, deleted_count = result
 
                     # Сохраняем данные
                     save_table_data(table_name, table_data)
@@ -337,8 +341,6 @@ def run():
                         )
                     else:
                         print("Записей для удаления не найдено")
-                except (ValueError, KeyError) as e:
-                    print(str(e))
 
             elif command == "info":
                 # info <table>
@@ -349,18 +351,15 @@ def run():
 
                 table_name = args[1]
 
-                try:
-                    # Загружаем данные таблицы
-                    table_data = load_table_data(table_name)
+                # Загружаем данные таблицы
+                table_data = load_table_data(table_name)
 
-                    # Получаем информацию о таблице
-                    info = get_table_info(metadata, table_data, table_name)
-
+                # Получаем информацию о таблице
+                info = get_table_info(metadata, table_data, table_name)
+                if info is not None:
                     print(f"Таблица: {info['name']}")
                     print(f"Столбцы: {info['columns']}")
                     print(f"Количество записей: {info['record_count']}")
-                except (ValueError, KeyError) as e:
-                    print(str(e))
 
             else:
                 print(f"Неизвестная команда: '{command}'")

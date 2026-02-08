@@ -1,27 +1,3 @@
 {
-    "tables": {
-        "products": {
-            "columns": {
-                "ID": "int",
-                "title": "str",
-                "price": "int"
-            }
-        },
-        "users": {
-            "columns": {
-                "ID": "int",
-                "name": "str",
-                "age": "int",
-                "active": "bool"
-            }
-        },
-        "employees": {
-            "columns": {
-                "ID": "int",
-                "name": "str",
-                "age": "int",
-                "salary": "int"
-            }
-        }
-    }
+    "tables": {}
 }

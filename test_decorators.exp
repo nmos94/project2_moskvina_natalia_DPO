@@ -1,0 +1,62 @@
+#!/usr/bin/expect -f
+# Тест декораторов
+
+set timeout 10
+spawn python3 -m src.primitive_db.main
+
+# Создание таблицы
+expect ">>>Введите команду:"
+send "create_table users name:str age:int active:bool\r"
+
+# Вставка записи (с декоратором @log_time)
+expect ">>>Введите команду:"
+send "insert into users values (\"Alice\", 30, true)\r"
+
+# Вставка еще одной записи
+expect ">>>Введите команду:"
+send "insert into users values (\"Bob\", 25, false)\r"
+
+# Выборка данных (с декоратором @log_time)
+expect ">>>Введите команду:"
+send "select from users\r"
+
+# Попытка удаления записи с отменой (декоратор @confirm_action)
+expect ">>>Введите команду:"
+send "delete from users where ID = 1\r"
+expect "Вы уверены, что хотите выполнить \"удаление записи\"? \[y/n\]:"
+send "n\r"
+
+# Удаление записи с подтверждением (декоратор @confirm_action)
+expect ">>>Введите команду:"
+send "delete from users where ID = 2\r"
+expect "Вы уверены, что хотите выполнить \"удаление записи\"? \[y/n\]:"
+send "y\r"
+
+# Проверка результата
+expect ">>>Введите команду:"
+send "select from users\r"
+
+# Попытка удаления таблицы с отменой (декоратор @confirm_action)
+expect ">>>Введите команду:"
+send "drop_table users\r"
+expect "Вы уверены, что хотите выполнить \"удаление таблицы\"? \[y/n\]:"
+send "n\r"
+
+# Проверка, что таблица не удалена
+expect ">>>Введите команду:"
+send "info users\r"
+
+# Удаление таблицы с подтверждением
+expect ">>>Введите команду:"
+send "drop_table users\r"
+expect "Вы уверены, что хотите выполнить \"удаление таблицы\"? \[y/n\]:"
+send "y\r"
+
+# Тест обработки ошибок (декоратор @handle_db_errors)
+expect ">>>Введите команду:"
+send "insert into nonexistent values (\"test\", 1)\r"
+
+expect ">>>Введите команду:"
+send "exit\r"
+
+expect eof
