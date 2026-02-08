@@ -1,6 +1,8 @@
 import json
 import os
 
+from src.primitive_db.constants import DATA_DIR
+
 
 def load_metadata(filepath):
     """
@@ -43,9 +45,9 @@ def load_table_data(table_name):
         list: список записей таблицы (список словарей) или пустой список
     """
     # Создаем директорию data, если её нет
-    os.makedirs("data", exist_ok=True)
+    os.makedirs(DATA_DIR, exist_ok=True)
 
-    filepath = f"data/{table_name}.json"
+    filepath = f"{DATA_DIR}/{table_name}.json"
     try:
         with open(filepath, 'r', encoding='utf-8') as f:
             return json.load(f)
@@ -62,8 +64,8 @@ def save_table_data(table_name, data):
         data: список записей (список словарей)
     """
     # Создаем директорию data, если её нет
-    os.makedirs("data", exist_ok=True)
+    os.makedirs(DATA_DIR, exist_ok=True)
 
-    filepath = f"data/{table_name}.json"
+    filepath = f"{DATA_DIR}/{table_name}.json"
     with open(filepath, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)

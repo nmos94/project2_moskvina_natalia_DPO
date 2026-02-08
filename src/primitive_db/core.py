@@ -1,3 +1,4 @@
+from src.primitive_db.constants import AUTO_ID_COLUMN, AUTO_ID_TYPE, VALID_TYPES
 from src.primitive_db.decorators import confirm_action, handle_db_errors, log_time
 
 
@@ -29,27 +30,24 @@ def create_table(metadata, table_name, columns):
     if table_name in metadata["tables"]:
         raise ValueError(f"Ошибка: таблица '{table_name}' уже существует")
 
-    # Допустимые типы данных
-    valid_types = {"int", "str", "bool"}
-
     # Проверяем корректность типов данных
     for column_name, column_type in columns:
-        if column_type not in valid_types:
+        if column_type not in VALID_TYPES:
             raise ValueError(
                 f"Ошибка: недопустимый тип данных '{column_type}' "
                 f"для столбца '{column_name}'. "
-                f"Разрешены только: {', '.join(valid_types)}"
+                f"Разрешены только: {', '.join(VALID_TYPES)}"
             )
 
     # Проверяем, задан ли столбец ID пользователем
-    has_id = any(col_name.upper() == "ID" for col_name, _ in columns)
+    has_id = any(col_name.upper() == AUTO_ID_COLUMN for col_name, _ in columns)
 
     # Создаем словарь столбцов
     columns_dict = {}
 
     # Если ID не задан, добавляем его автоматически в начало
     if not has_id:
-        columns_dict["ID"] = "int"
+        columns_dict[AUTO_ID_COLUMN] = AUTO_ID_TYPE
 
     # Добавляем остальные столбцы
     for column_name, column_type in columns:
@@ -166,7 +164,7 @@ def insert(metadata, table_data, table_name, values):
     columns = list(table_schema.keys())
 
     # Исключаем ID из проверки количества (ID генерируется автоматически)
-    columns_without_id = [col for col in columns if col.upper() != "ID"]
+    columns_without_id = [col for col in columns if col.upper() != AUTO_ID_COLUMN]
 
     # Проверяем количество значений
     if len(values) != len(columns_without_id):
@@ -178,7 +176,7 @@ def insert(metadata, table_data, table_name, values):
     # Генерируем новый ID
     if table_data:
         # Находим максимальный ID
-        max_id = max(record.get("ID", 0) for record in table_data)
+        max_id = max(record.get(AUTO_ID_COLUMN, 0) for record in table_data)
         new_id = max_id + 1
     else:
         new_id = 1
@@ -187,7 +185,10 @@ def insert(metadata, table_data, table_name, values):
     new_record = {}
 
     # Находим имя столбца ID (может быть ID, id, Id)
-    id_column = next((col for col in columns if col.upper() == "ID"), "ID")
+    id_column = next(
+        (col for col in columns if col.upper() == AUTO_ID_COLUMN),
+        AUTO_ID_COLUMN
+    )
     new_record[id_column] = new_id
 
     # Валидируем и добавляем значения

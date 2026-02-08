@@ -1,3 +1,10 @@
 {
-    "tables": {}
+    "tables": {
+        "test": {
+            "columns": {
+                "ID": "int",
+                "name": "str"
+            }
+        }
+    }
 }

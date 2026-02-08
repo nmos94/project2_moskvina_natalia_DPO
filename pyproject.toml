@@ -1,7 +1,7 @@
 [project]
 name = "project2-moskvina-natalia-dpo"
 version = "0.1.0"
-description = ""
+description = "Примитивная база данных с поддержкой CRUD операций, декораторов для обработки ошибок и логирования времени выполнения"
 authors = [
     {name = "nmos94",email = "natalya.moskvina74@gmail.com"}
 ]
